@@ -14,18 +14,19 @@ let score = 0;
 let snake = [
     { x: 5, y: 5 }
 ];
-let food = { x: 10, y: 10 };
-let dx = 1; // 設定初始移動方向為向右
+let foods = []; // 改為存儲多個食物
+let dx = 1;
 let dy = 0;
 let gameInterval;
+let foodInterval;
 let gameStarted = false;
-let canChangeDirection = true; // 新增方向鎖定標記
+let canChangeDirection = true;
 
 // 遊戲初始化
 function initGame() {
     snake = [{ x: 5, y: 5 }];
-    food = generateFood();
-    dx = 1; // 確保重新開始時也是向右移動
+    foods = [generateFood()]; // 初始化一顆食物
+    dx = 1;
     dy = 0;
     score = 0;
     scoreElement.textContent = score;
@@ -39,7 +40,10 @@ function generateFood() {
             x: Math.floor(Math.random() * tileCount),
             y: Math.floor(Math.random() * tileCount)
         };
-    } while (snake.some(segment => segment.x === newFood.x && segment.y === newFood.y));
+    } while (
+        snake.some(segment => segment.x === newFood.x && segment.y === newFood.y) ||
+        foods.some(food => food.x === newFood.x && food.y === newFood.y)
+    );
     return newFood;
 }
 
@@ -55,9 +59,11 @@ function draw() {
         ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
     });
 
-    // 繪製食物
+    // 繪製所有食物
     ctx.fillStyle = 'red';
-    ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+    foods.forEach(food => {
+        ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+    });
 }
 
 // 移動蛇
@@ -70,7 +76,7 @@ function moveSnake() {
         return;
     }
 
-    // 檢查是否撞到自己（只檢查與身體其他部分的碰撞）
+    // 檢查是否撞到自己
     if (snake.slice(1).some(segment => segment.x === head.x && segment.y === head.y)) {
         gameOver();
         return;
@@ -78,11 +84,12 @@ function moveSnake() {
 
     snake.unshift(head);
 
-    // 檢查是否吃到食物
-    if (head.x === food.x && head.y === food.y) {
+    // 檢查是否吃到任何食物
+    const foodIndex = foods.findIndex(food => food.x === head.x && food.y === head.y);
+    if (foodIndex !== -1) {
         score += 10;
         scoreElement.textContent = score;
-        food = generateFood();
+        foods.splice(foodIndex, 1); // 移除被吃掉的食物
     } else {
         snake.pop();
     }
@@ -92,12 +99,13 @@ function moveSnake() {
 function gameLoop() {
     moveSnake();
     draw();
-    canChangeDirection = true; // 在每次移動後重置方向鎖定
+    canChangeDirection = true;
 }
 
 // 遊戲結束
 function gameOver() {
     clearInterval(gameInterval);
+    clearInterval(foodInterval);
     gameStarted = false;
     startBtn.textContent = '重新開始';
     alert('遊戲結束！得分：' + score);
@@ -110,7 +118,10 @@ function startGame() {
     initGame();
     gameStarted = true;
     startBtn.textContent = '遊戲進行中';
-    gameInterval = setInterval(gameLoop, 200); // 將間隔時間從 100 調整為 200 毫秒
+    gameInterval = setInterval(gameLoop, 200);
+    foodInterval = setInterval(() => {
+        foods.push(generateFood());
+    }, 2000); // 改為每 2 秒生成一個新食物
 }
 
 // 按鍵控制
