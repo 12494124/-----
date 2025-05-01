@@ -19,6 +19,7 @@ let dx = 1; // 設定初始移動方向為向右
 let dy = 0;
 let gameInterval;
 let gameStarted = false;
+let canChangeDirection = true; // 新增方向鎖定標記
 
 // 遊戲初始化
 function initGame() {
@@ -91,6 +92,7 @@ function moveSnake() {
 function gameLoop() {
     moveSnake();
     draw();
+    canChangeDirection = true; // 在每次移動後重置方向鎖定
 }
 
 // 遊戲結束
@@ -113,21 +115,43 @@ function startGame() {
 
 // 按鍵控制
 document.addEventListener('keydown', (event) => {
-    if (!gameStarted) return;
+    if (!gameStarted || !canChangeDirection) return;
 
+    let changed = false;
+    
     switch (event.key) {
         case 'ArrowUp':
-            if (dy !== 1) { dx = 0; dy = -1; }
+            if (dy !== 1) {
+                dx = 0;
+                dy = -1;
+                changed = true;
+            }
             break;
         case 'ArrowDown':
-            if (dy !== -1) { dx = 0; dy = 1; }
+            if (dy !== -1) {
+                dx = 0;
+                dy = 1;
+                changed = true;
+            }
             break;
         case 'ArrowLeft':
-            if (dx !== 1) { dx = -1; dy = 0; }
+            if (dx !== 1) {
+                dx = -1;
+                dy = 0;
+                changed = true;
+            }
             break;
         case 'ArrowRight':
-            if (dx !== -1) { dx = 1; dy = 0; }
+            if (dx !== -1) {
+                dx = 1;
+                dy = 0;
+                changed = true;
+            }
             break;
+    }
+
+    if (changed) {
+        canChangeDirection = false; // 方向改變後鎖定，直到下一次移動
     }
 });
 
